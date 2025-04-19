@@ -2,21 +2,7 @@
 
 This project fine-tunes a custom convolutional neural network (CNN) called **iNaturalistCNN** on the [nature\_12K](https://www.kaggle.com/datasets/jpullen/nature12) dataset (specifically the iNaturalist subset). The training uses PyTorch Lightning and Weights & Biases (wandb) for experiment tracking, model logging, and hyperparameter sweeping.
 
----
 
-## 📁 Project Structure
-
-```bash
-.
-├── train.py                # Main training script (provided here)
-├── README.md               # This file
-└── /data
-    └── inaturalist_12K
-        ├── train/
-        └── val/
-```
-
----
 
 ## 📦 Features
 
