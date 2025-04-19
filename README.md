@@ -1,4 +1,4 @@
-# iNaturalistCNN Hyperparameter Sweep
+# iNaturalistCNN 
 
 This project fine-tunes a custom convolutional neural network (CNN), **iNaturalistCNN**, on the [nature_12K](https://www.kaggle.com/datasets/jpullen/nature12) dataset (specifically, the iNaturalist subset). Training is implemented using PyTorch Lightning and tracked with Weights & Biases (wandb), including experiment logging and hyperparameter sweeping.
 
