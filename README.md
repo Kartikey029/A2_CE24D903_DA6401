@@ -1,38 +1,66 @@
 # iNaturalistCNN Hyperparameter Sweep
 
-This project fine-tunes a custom convolutional neural network (CNN) called **iNaturalistCNN** on the [nature\_12K](https://www.kaggle.com/datasets/jpullen/nature12) dataset (specifically the iNaturalist subset). The training uses PyTorch Lightning and Weights & Biases (wandb) for experiment tracking, model logging, and hyperparameter sweeping.
+This project fine-tunes a custom convolutional neural network (CNN), **iNaturalistCNN**, on the [nature_12K](https://www.kaggle.com/datasets/jpullen/nature12) dataset (specifically, the iNaturalist subset). Training is implemented using PyTorch Lightning and tracked with Weights & Biases (wandb), including experiment logging and hyperparameter sweeping.
 
-
+---
 
 ## 📦 Features
 
-- Custom CNN with 5 convolutional blocks.
-- Multiple activation function choices: `relu`, `gelu`, `silu`, `mish`, `none`, **Sigmoid, Tanh**
-- Support for filter organization patterns: `constant`, `doubling`, `halving`.
-- Dropout & Batch Normalization support.
-- Stratified dataset splitting to ensure class balance.
-- Built-in support for data augmentation.
-- Integrated with wandb for training and sweep visualization.
-- Early stopping for regularization.
+- Custom CNN with 5 convolutional blocks
+- Multiple activation functions: `relu`, `gelu`, `silu`, `mish`, `none`, `sigmoid`, `tanh`
+- Filter organization strategies: `constant`, `doubling`, `halving`
+- Support for dropout and batch normalization
+- Stratified dataset splitting for balanced class distribution
+- Optional data augmentation
+- Integration with wandb for visualization and logging
+- Early stopping to prevent overfitting
 
 ---
 
 ## 🧠 Model Definition
 
-The model is defined as `iNaturalistCNN`, inheriting from `pl.LightningModule` with the following structure:
+The model, `iNaturalistCNN`, inherits from `pl.LightningModule` and has the following configurable structure:
 
 ### Key Parameters
 
-- `conv_configs`: List of tuples defining convolution layers (filters, kernel size).
-- `dense_neurons`: Number of neurons in the fully connected layer.
-- `dropout_rate`: Dropout probability.
-- `activation_fn`: Configurable activation for conv and dense layers.
+- `conv_configs`: List of tuples defining convolutional layers `(filters, kernel size)`
+- `dense_neurons`: Number of neurons in the fully connected layer
+- `dropout_rate`: Dropout probability
+- `activation_fn`: Activation function for both convolutional and dense layers
+- `use_batch_norm`: Boolean to toggle batch normalization
+- `learning_rate`: Learning rate for the optimizer
+- `input_size`: Size of input images
+- `num_classes`: Number of target classes
+
+### Functions in `iNaturalistCNN`
+
+```python
+class iNaturalistCNN(pl.LightningModule):
+    def __init__(self, conv_configs, dense_neurons, dropout_rate, conv_activation,
+                 dense_activation, use_batch_norm, learning_rate, input_size, num_classes):
+        # Initialize model layers and parameters
+
+    def forward(self, x):
+        # Forward pass through the network
+
+    def training_step(self, batch, batch_idx):
+        # Training loop logic (single batch)
+
+    def validation_step(self, batch, batch_idx):
+        # Validation loop logic (single batch)
+
+    def test_step(self, batch, batch_idx):
+        # Testing loop logic (single batch)
+
+    def configure_optimizers(self):
+        # Optimizer and learning rate scheduler configuration
+```
 
 ---
 
 ## 🏃‍♂️ Training Function
 
-The main training function `run_training()` handles the sweep-compatible configuration, model instantiation, data preprocessing, and trainer setup.
+The primary training function, `run_training()`, sets up hyperparameters from wandb, prepares the data, initializes the model, and configures the PyTorch Lightning trainer.
 
 ### Function Signature
 
@@ -40,35 +68,35 @@ The main training function `run_training()` handles the sweep-compatible configu
 def run_training():
 ```
 
-This function expects hyperparameters to be passed via `wandb.config`.
+This function retrieves all training parameters via `wandb.config`.
 
-### Function Arguments via wandb.config
+### Expected Hyperparameters (via wandb.config)
 
-- `train_data_path`: Path to training data directory.
-- `validation_data_path`: Path to validation data directory.
-- `learning_rate`: Learning rate for optimizer.
-- `batch_size`: Batch size for data loaders.
-- `dense_neurons`: Number of neurons in the dense layer.
-- `dropout_rate`: Dropout rate to apply (applies to both CNN and FCN).
-- `conv_activation`: Activation function for conv layers.
-- `dense_activation`: Activation function for dense layer.
-- `batch_norm`: Boolean to use batch normalization.
-- `filter_organization`: Strategy for convolutional filters (`constant`, `doubling`, `halving`).
-- `constant_filter` or `base_filter`: Base filter value depending on strategy.
-- `data_augmentation`: Toggle for using data augmentation.
-- `weight_decay`: Regularization term for optimizer.
-- `project_name`: wandb project name.
+- `train_data_path`: Directory path for training data
+- `validation_data_path`: Directory path for validation data
+- `learning_rate`: Optimizer learning rate
+- `batch_size`: Batch size for the DataLoader
+- `dense_neurons`: Neurons in the dense layer
+- `dropout_rate`: Dropout probability
+- `conv_activation`: Activation for convolutional layers
+- `dense_activation`: Activation for the dense layer
+- `batch_norm`: Enable/disable batch normalization
+- `filter_organization`: Filter pattern (`constant`, `doubling`, `halving`)
+- `constant_filter` or `base_filter`: Base filter count depending on strategy
+- `data_augmentation`: Enable/disable augmentation
+- `weight_decay`: Optimizer weight decay
+- `project_name`: wandb project identifier
 
 ---
 
-## 🧪 Function: run\_training
+## 🧪 `run_training` Function Breakdown
 
 ```python
 def run_training():
     wandb.init()
     config = wandb.config
 
-    # Filter organization
+    # Configure convolutional filter layout
     filt_org = config.get("filter_organization", "constant")
     if filt_org == "constant":
         conv_configs = [(config.constant_filter, 3)] * 5
@@ -81,7 +109,7 @@ def run_training():
     else:
         raise ValueError("Unknown filter organization!")
 
-    # Data augmentation
+    # Apply data augmentation
     use_data_aug = config.get("data_augmentation", True)
     transform_train, transform_test = get_transforms(use_data_aug)
 
@@ -92,11 +120,12 @@ def run_training():
     test_dataset = Subset(train_dataset_full, test_idx)
     val_dataset = ImageFolder(root=config.validation_data_path, transform=transform_test)
 
+    # DataLoaders
     train_loader = DataLoader(train_dataset, batch_size=int(config.batch_size), shuffle=True, num_workers=4)
     val_loader = DataLoader(val_dataset, batch_size=int(config.batch_size), shuffle=False, num_workers=4)
     test_loader = DataLoader(test_dataset, batch_size=int(config.batch_size), shuffle=False, num_workers=4)
 
-    # Create model
+    # Instantiate model
     model = iNaturalistCNN(
         num_classes=10,
         learning_rate=config.learning_rate,
@@ -109,7 +138,7 @@ def run_training():
         use_batch_norm=config.batch_norm
     )
 
-    # Logger and early stopping
+    # Setup wandb logger and callbacks
     wandb_logger = WandbLogger(project=config.project_name)
     early_stop_callback = EarlyStopping(monitor="val_loss", patience=3, mode="min", verbose=True)
 
@@ -140,20 +169,19 @@ if __name__ == "__main__":
 
 ## 📊 Sweep Configuration
 
-- Grid search over activations, dropout, weight decay, and more.
-- Configurable via Python dictionary (no YAML required).
+- Grid search across activations, dropout rates, weight decay, and more
+- Configurable via Python dictionary
 - Includes batch size, learning rate, augmentation toggle, etc.
 
 ---
 
 ## 📌 Requirements
 
-```
+```bash
 pytorch-lightning
 wandb
 scikit-learn
 torchvision
 matplotlib
 ```
-
 
