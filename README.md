@@ -77,13 +77,14 @@ This function retrieves all training parameters via `wandb.config`.
 - `learning_rate`: Optimizer learning rate
 - `batch_size`: Batch size for the DataLoader
 - `dense_neurons`: Neurons in the dense layer
-- `dropout_rate`: Dropout probability
+- `dropout_rate`: Dropout same for the FCN and CNN
 - `conv_activation`: Activation for convolutional layers
 - `dense_activation`: Activation for the dense layer
 - `batch_norm`: Enable/disable batch normalization
 - `filter_organization`: Filter pattern (`constant`, `doubling`, `halving`)
-- `constant_filter` or `base_filter`: Base filter count depending on strategy
-- `data_augmentation`: Enable/disable augmentation
+- `constant_filter` : All layers get the same number of filters.
+- `base_filter`: Filters increase/decrease across layer based on the what filter organization is there except "Constant". 
+- `data_augmentation`: Enable/disable augmentation 
 - `weight_decay`: Optimizer weight decay
 - `project_name`: wandb project identifier
 
