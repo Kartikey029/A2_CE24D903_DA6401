@@ -70,7 +70,7 @@ def run_training():
 
 This function retrieves all training parameters via `wandb.config`.
 
-### Expected Hyperparameters (via wandb.config)
+### Hyperparameters (via wandb.config)
 
 - `train_data_path`: Directory path for training data
 - `validation_data_path`: Directory path for validation data
